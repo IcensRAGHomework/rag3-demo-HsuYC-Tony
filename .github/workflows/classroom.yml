@@ -30,8 +30,8 @@ jobs:
           fi
       
           # Extract assignment info
-          ASSIGNMENT_ID=$(echo "$ASSIGNMENT_INFO" | jq -r '.[] | select(.slug=="rag2-demo") | .id')
-          ASSIGNMENT_NAME=$(echo "$ASSIGNMENT_INFO" | jq -r '.[] | select(.slug=="rag2-demo") | .title')
+          ASSIGNMENT_ID=$(echo "$ASSIGNMENT_INFO" | jq -r '.[] | select(.slug=="rag3-demo") | .id')
+          ASSIGNMENT_NAME=$(echo "$ASSIGNMENT_INFO" | jq -r '.[] | select(.slug=="rag3-demo") | .title')
       
           # Validate extraction
           if [[ -z "$ASSIGNMENT_ID" || -z "$ASSIGNMENT_NAME" || "$ASSIGNMENT_ID" == "null" ]]; then
