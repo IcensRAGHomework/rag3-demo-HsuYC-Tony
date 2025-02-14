@@ -1,0 +1,99 @@
+name: Trigger Autograding
+
+'on':
+  push:
+    paths:
+      - 'student_assignment.py'
+
+jobs:
+  trigger-autograding:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch Classroom ID
+        run: |
+          CLASSROOM_ID=$(curl -s -H "Authorization: token ${{ secrets.ORG_PAT_TOKEN_2 }}" \
+                           -H "Accept: application/vnd.github.v3+json" \
+                           https://api.github.com/classrooms | jq -r '.[1].id')
+          echo "CLASSROOM_ID=$CLASSROOM_ID" >> $GITHUB_ENV
+
+      - name: Fetch Assignment Info
+        run: |
+          # Fetch all assignments
+          ASSIGNMENT_INFO=$(curl -s -H "Authorization: token ${{ secrets.ORG_PAT_TOKEN_2 }}" \
+                                -H "Accept: application/vnd.github.v3+json" \
+                                https://api.github.com/classrooms/${{ env.CLASSROOM_ID }}/assignments)
+      
+          # Ensure it's valid JSON
+          if ! echo "$ASSIGNMENT_INFO" | jq -e . >/dev/null 2>&1; then
+            echo "Error: API returned invalid JSON"
+            exit 1
+          fi
+      
+          # Extract assignment info
+          ASSIGNMENT_ID=$(echo "$ASSIGNMENT_INFO" | jq -r '.[] | select(.slug=="rag2-demo") | .id')
+          ASSIGNMENT_NAME=$(echo "$ASSIGNMENT_INFO" | jq -r '.[] | select(.slug=="rag2-demo") | .title')
+      
+          # Validate extraction
+          if [[ -z "$ASSIGNMENT_ID" || -z "$ASSIGNMENT_NAME" || "$ASSIGNMENT_ID" == "null" ]]; then
+            echo "Error: Failed to fetch assignment details."
+            exit 1
+          fi
+      
+          # Save values
+          echo "ASSIGNMENT_ID=$ASSIGNMENT_ID" >> $GITHUB_ENV
+          echo "assignment_name=$ASSIGNMENT_NAME" >> $GITHUB_ENV
+
+      - name: Fetch Roster Identifier & Submission Timestamp
+        run: |
+          # Fetch student grades for the assignment
+          GRADES_JSON=$(curl -s -H "Authorization: token ${{ secrets.ORG_PAT_TOKEN_2 }}" \
+                              -H "Accept: application/vnd.github.v3+json" \
+                              "https://api.github.com/assignments/${{ env.ASSIGNMENT_ID }}/grades")
+          echo "Raw API Response:"
+          echo "$GRADES_JSON"
+      
+          # Ensure valid JSON response
+          if ! echo "$GRADES_JSON" | jq -e . >/dev/null 2>&1; then
+            echo "Error: API returned invalid JSON for grades"
+            exit 1
+          fi
+      
+          # Extract roster identifier and submission timestamp based on the matching GitHub username
+          ROSTER_IDENTIFIER=$(echo "$GRADES_JSON" | jq -r '.[] | select(.github_username=="${{ github.actor }}") | .roster_identifier')
+          SUBMISSION_TIMESTAMP=$(echo "$GRADES_JSON" | jq -r '.[] | select(.github_username=="${{ github.actor }}") | .submission_timestamp')
+
+          # If roster_identifier is empty, set it to "Not Set"
+          if [[ -z "$ROSTER_IDENTIFIER" || "$ROSTER_IDENTIFIER" == "null" ]]; then
+            ROSTER_IDENTIFIER="Not Set"
+          fi
+      
+          if [[ -z "$SUBMISSION_TIMESTAMP" || "$SUBMISSION_TIMESTAMP" == "null" ]]; then
+            echo "Warning: No submission timestamp found for user ${{ github.actor }}"
+          fi
+      
+          # Save to environment variables
+          echo "roster_identifier=$ROSTER_IDENTIFIER" >> $GITHUB_ENV
+          echo "submission_timestamp=$SUBMISSION_TIMESTAMP" >> $GITHUB_ENV
+      
+          # Output for debugging
+          echo "Roster Identifier: $ROSTER_IDENTIFIER"
+          echo "Submission Timestamp: $SUBMISSION_TIMESTAMP"
+        shell: bash
+
+      - name: Trigger Private Autograder
+        run: |
+          curl -X POST -H "Authorization: token ${{ secrets.ORG_PAT_TOKEN }}" \
+               -H "Accept: application/vnd.github.v3+json" \
+               https://api.github.com/repos/IcensRAGHomework/hw03-autograder/actions/workflows/autograde.yml/dispatches \
+               -d '{
+                 "ref": "main",
+                 "inputs": {
+                   "student_repo": "${{ github.repository }}",
+                   "commit_sha": "${{ github.sha }}",
+                   "assignment_name": "${{ env.assignment_name }}", 
+                   "github_username": "${{ github.actor }}",
+                   "roster_identifier": "${{ env.roster_identifier }}",
+                   "student_repository_url": "https://github.com/${{ github.repository }}",
+                   "submission_timestamp": "${{ env.submission_timestamp }}"
+                 }
+               }'
