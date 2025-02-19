@@ -111,3 +111,65 @@ jobs:
                    "commit_sha": "${{ github.sha }}"
                  }
                }'
+
+      - name: Wait for Results
+        run: |
+          RESULTS_FILE="grading_results.txt"
+          # echo "" > "$RESULTS_FILE"  # Ensure fresh results
+      
+          while [[ ! -s "$RESULTS_FILE" ]]; do
+            echo "Waiting for grading to complete..."
+            sleep 30
+
+            ARTIFACT_URL=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              "https://api.github.com/repos/${{ github.repository }}/actions/artifacts" \
+              | jq -r '.artifacts[] | select(.name=="grading-results") | .archive_download_url' | head -n 1)
+
+            if [[ -z "$ARTIFACT_URL" ]]; then
+              echo "No artifact found!"
+              exit 1
+            fi
+            echo "ARTIFACT_URL=$ARTIFACT_URL" >> $GITHUB_ENV
+
+            curl -L -o grading-results.zip -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              "$ARTIFACT_URL"
+            unzip grading-results.zip
+          done
+      
+          echo "Grading completed. Results:"
+          cat "$RESULTS_FILE"
+
+      - name: Get result of question 1
+        id: Hw03_Q1
+        run: |
+          HW03_Q1_RESULTS=$(grep 'HW03_Q1_RESULTS' grading_results.txt | cut -d ':' -f2 | xargs)
+          echo "HW03_Q1_RESULTS=${HW03_Q1_RESULTS:-0}" >> $GITHUB_ENV
+      
+      - name: Get result of question 2
+        id: Hw03_Q2
+        run: |
+          HW03_Q2_RESULTS=$(grep 'HW03_Q2_RESULTS' grading_results.txt | cut -d ':' -f2 | xargs)
+          echo "HW03_Q2_RESULTS=${HW03_Q2_RESULTS:-0}" >> $GITHUB_ENV
+
+      - name: Get result of question 3
+        id: Hw03_Q3
+        run: |
+          HW03_Q3_RESULTS=$(grep 'HW03_Q3_RESULTS' grading_results.txt | cut -d ':' -f2 | xargs)
+          echo "HW03_Q3_RESULTS=${HW03_Q3_RESULTS:-0}" >> $GITHUB_ENV
+
+      - name: Debug Receive Results
+        run: |
+          echo "Receive Q1 Result: $HW03_Q1_RESULTS"
+          echo "Receive Q2 Result: $HW03_Q2_RESULTS"
+          echo "Receive Q3 Result: $HW03_Q3_RESULTS"
+
+      # Aggregate autograding results
+      - name: Report autograding results
+        id: grading_report
+        uses: classroom-resources/autograding-grading-reporter@v1
+        env:
+          HW03_Q1_RESULTS: "${{ env.HW03_Q1_RESULTS }}"
+          HW03_Q2_RESULTS: "${{ env.HW03_Q2_RESULTS }}"
+          HW03_Q3_RESULTS: "${{ env.HW03_Q3_RESULTS }}"
+        with:
+          runners: Hw03_Q1,Hw03_Q2,Hw03_Q3
