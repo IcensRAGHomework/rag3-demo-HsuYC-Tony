@@ -1,0 +1,76 @@
+name: Receive Results
+
+permissions:
+  contents: write
+  actions: write
+  checks: write
+
+on:
+  workflow_dispatch:
+    inputs:
+      hw03_q1_results:
+        description: "Results of question 1"
+        required: true
+      hw03_q2_results:
+        description: "Results of question 2"
+        required: true
+      hw03_q3_results:
+        description: "Results of question 3"
+        required: true
+
+jobs:
+  process-result:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Save Grading Results
+        run: |
+          echo "HW03_Q1_RESULTS:${{ github.event.inputs.hw03_q1_results }}" > grading_results.txt
+          echo "HW03_Q2_RESULTS:${{ github.event.inputs.hw03_q2_results }}" >> grading_results.txt
+          echo "HW03_Q3_RESULTS:${{ github.event.inputs.hw03_q3_results }}" >> grading_results.txt
+
+      - name: Upload Grading Results as Artifact
+        id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: grading-results
+          path: grading_results.txt
+          retention-days: 1
+
+      - name: Get Artifact Info
+        run: |
+          echo "ARTIFACT_NAME=grading-results" >> $GITHUB_ENV
+
+      - name: Get result of question 1
+        id: Hw03_Q1
+        run: |
+          HW03_Q1_RESULTS="${{ github.event.inputs.hw03_q1_results }}"
+          echo "HW03_Q1_RESULTS=${HW03_Q1_RESULTS:-0}" >> $GITHUB_ENV
+      
+      - name: Get result of question 2
+        id: Hw03_Q2
+        run: |
+          HW03_Q2_RESULTS="${{ github.event.inputs.hw03_q2_results }}"
+          echo "HW03_Q2_RESULTS=${HW03_Q2_RESULTS:-0}" >> $GITHUB_ENV
+
+      - name: Get result of question 3
+        id: Hw03_Q3
+        run: |
+          HW03_Q3_RESULTS="${{ github.event.inputs.hw03_q3_results }}"
+          echo "HW03_Q3_RESULTS=${HW03_Q3_RESULTS:-0}" >> $GITHUB_ENV
+
+      - name: Debug Receive Results
+        run: |
+          echo "Receive Q1 Result: $HW03_Q1_RESULTS"
+          echo "Receive Q2 Result: $HW03_Q2_RESULTS"
+          echo "Receive Q3 Result: $HW03_Q3_RESULTS"
+
+      # Aggregate autograding results
+      - name: Report autograding results
+        id: grading_report
+        uses: classroom-resources/autograding-grading-reporter@v1
+        env:
+          HW03_Q1_RESULTS: "${{ env.HW03_Q1_RESULTS }}"
+          HW03_Q2_RESULTS: "${{ env.HW03_Q2_RESULTS }}"
+          HW03_Q3_RESULTS: "${{ env.HW03_Q3_RESULTS }}"
+        with:
+          runners: Hw03_Q1,Hw03_Q2,Hw03_Q3
