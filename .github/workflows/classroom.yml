@@ -108,6 +108,6 @@ jobs:
                  "ref": "main",
                  "inputs": {
                    "student_repo": "${{ github.repository }}",
-                   "commit_sha": "${{ github.sha }}",
+                   "commit_sha": "${{ github.sha }}"
                  }
                }'
