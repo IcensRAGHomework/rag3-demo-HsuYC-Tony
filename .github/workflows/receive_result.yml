@@ -30,7 +30,7 @@ jobs:
         run: |
           echo "HW03_Q1_RESULTS:${{ github.event.client_payload.hw03_q1_results }}" > grading_results.txt
           echo "HW03_Q2_RESULTS:${{ github.event.client_payload.hw03_q2_results }}" >> grading_results.txt
-          echo "HW03_Q2_RESULTS:${{ github.event.client_payload.hw03_q3_results }}" >> grading_results.txt
+          echo "HW03_Q3_RESULTS:${{ github.event.client_payload.hw03_q3_results }}" >> grading_results.txt
           # echo "HW03_Q1_RESULTS:${{ github.event.inputs.hw03_q1_results }}" > grading_results.txt
           # echo "HW03_Q2_RESULTS:${{ github.event.inputs.hw03_q2_results }}" >> grading_results.txt
           # echo "HW03_Q3_RESULTS:${{ github.event.inputs.hw03_q3_results }}" >> grading_results.txt
