@@ -7,7 +7,7 @@ name: Receive Results
 
 on:
   repository_dispatch:
-    types: [score_update]
+    types: [receive_result]
 
 # on:
 #   workflow_dispatch:
