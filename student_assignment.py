@@ -20,6 +20,7 @@ def generate_hw02(question, city, store_type, start_date, end_date):
     pass
     
 def generate_hw03(question, store_name, new_store_name, city, store_type):
+    print('')
     pass
     
 def demo(question):
