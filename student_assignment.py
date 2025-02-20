@@ -92,7 +92,7 @@ def init_chromadb():
     chromadb_add(metadatas, content_list, total_count)
 
 def generate_hw01():
-    print('  ')
+    print('   ')
     pass
 
 def generate_hw02(question, city, store_type, start_date, end_date):
