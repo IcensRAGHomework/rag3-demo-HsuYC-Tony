@@ -22,7 +22,6 @@ def get_chromadb_id():
 
 def chromadb_add(metadata, text, total_count=1):
     print('===== Add from vector database =====')
-    print(' ')
 
     chroma_client = chromadb.PersistentClient(path=dbpath)
     openai_ef = embedding_functions.OpenAIEmbeddingFunction(
@@ -93,23 +92,7 @@ def init_chromadb():
     chromadb_add(metadatas, content_list, total_count)
 
 def generate_hw01():
-    chroma_client = chromadb.PersistentClient(path=dbpath)
-
-    openai_ef = embedding_functions.OpenAIEmbeddingFunction(
-        api_key=gpt_emb_config['api_key'],
-        api_base=gpt_emb_config['api_base'],
-        api_type=gpt_emb_config['openai_type'],
-        api_version=gpt_emb_config['api_version'],
-        deployment_id=gpt_emb_config['deployment_name']
-    )
-
-    collection = chroma_client.get_or_create_collection(
-        name="TRAVEL",
-        metadata={"hnsw:space": "cosine"},
-        embedding_function=openai_ef
-    )
-
-    return collection
+    pass
 
 def generate_hw02(question, city, store_type, start_date, end_date):
     pass
