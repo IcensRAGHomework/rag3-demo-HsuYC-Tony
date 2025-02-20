@@ -22,6 +22,7 @@ def get_chromadb_id():
 
 def chromadb_add(metadata, text, total_count=1):
     print('===== Add from vector database =====')
+    print('')
 
     chroma_client = chromadb.PersistentClient(path=dbpath)
     openai_ef = embedding_functions.OpenAIEmbeddingFunction(
