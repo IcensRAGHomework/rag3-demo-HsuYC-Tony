@@ -121,6 +121,7 @@ jobs:
                  "inputs": {
                    "student_repo": "${{ github.repository }}",
                    "github_username": "${{ github.actor }}",
+                   "roster_identifier": "${{ env.roster_identifier }}",
                    "commit_sha": "${{ github.sha }}"
                  }
                }'
