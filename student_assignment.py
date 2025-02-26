@@ -12,7 +12,7 @@ gpt_emb_config = get_model_configuration(gpt_emb_version)
 dbpath = "./"
  
 def generate_hw01():
-    print('')
+    print(' ')
     pass
     
 def generate_hw02(question, city, store_type, start_date, end_date):
